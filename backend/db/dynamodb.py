@@ -25,3 +25,29 @@ class DynamoDBAdapter(AbstractDatabase):
                 "PK2": poll.id,
             }
         )
+
+    def get_poll(self, id: str) -> Poll:
+        response = self.poll_table.get_item(Key={"id": id, "SK": "poll_info"})["Item"]
+
+        return Poll(
+            response["id"],
+            datetime.fromisoformat(response["date"]),
+            response["question"],
+            response["result"],
+            response.get("user"),
+        )
+
+    def get_all_polls(self) -> List[Poll]:
+        response = self.poll_table.scan(IndexName=self.main_page_gsi)["Items"]
+        polls = []
+
+        for poll in response:
+            poll = Poll(
+                poll["id"],
+                datetime.fromisoformat(poll["date"]),
+                poll["question"],
+                poll["result"],
+            )
+            polls.append(poll)
+
+        return polls
