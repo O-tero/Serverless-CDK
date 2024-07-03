@@ -64,3 +64,31 @@ class VotingServerlessCdkStack(core.Stack):
             write_capacity=10,
             stream=StreamViewType.NEW_IMAGE,
         )
+
+        # DynamoDB Lambda consumer worker
+        aggregate_votes_function = Function(
+            self,
+            "AggregateVotesLambda",
+            handler="ddb_stream.aggregate_vote_table",
+            runtime=PYTHON_RUNTIME,
+            code=Code.asset("./backend"),
+            layers=[python_deps_layer],
+            timeout=core.Duration.seconds(30),
+        )
+        aggregate_votes_function.add_environment("POLL_TABLE", poll_table.table_name)
+
+        # DynamoDB Stream (Lambda Event Source)
+        poll_table.grant_stream_read(aggregate_votes_function)
+        poll_table.grant_read_write_data(aggregate_votes_function)
+        ddb_aggregate_votes_event_source = DynamoEventSource(
+            poll_table, starting_position=StartingPosition.LATEST
+        )
+        aggregate_votes_function.add_event_source(ddb_aggregate_votes_event_source)
+
+        # DynamoDB main_page GSI
+        poll_table.add_global_secondary_index(
+            partition_key=Attribute(name="PK2", type=AttributeType.STRING),
+            projection_type=ProjectionType.INCLUDE,
+            index_name=MAIN_PAGE_GSI,
+            non_key_attributes=["date", "question", "result"],
+        )
