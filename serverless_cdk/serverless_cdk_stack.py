@@ -92,3 +92,41 @@ class VotingServerlessCdkStack(core.Stack):
             index_name=MAIN_PAGE_GSI,
             non_key_attributes=["date", "question", "result"],
         )
+
+        """
+        Create AWS Cognito User Pool
+        """
+        self.users = UserPool(self, "vote-user")
+
+        """
+        HTTP API API Gateway with CORS
+        """
+        api = HttpApi(
+            self,
+            "VoteHttpApi",
+            cors_preflight={
+                "allow_headers": ["*"],
+                "allow_methods": [
+                    HttpMethod.GET,
+                    HttpMethod.HEAD,
+                    HttpMethod.OPTIONS,
+                    HttpMethod.POST,
+                ],
+                "allow_origins": ["*"],
+                "max_age": core.Duration.days(10),
+            },
+        )
+
+        """
+        HTTP API Lambda functions
+        """
+        get_all_votes_function = api_lambda_function(
+            self,
+            "GetAllVoteLambda",
+            "api.get_all_votes",
+            api,
+            "/vote",
+            GET,
+            [python_deps_layer],
+            [poll_table],
+        )
