@@ -89,3 +89,41 @@ def create_poll(event, context):
         "headers": {"content-type": "application/json"},
         "body": json.dumps(msg),
     }
+
+
+def vote(event, context):
+    """
+    Publish an message to SQS queue.
+
+    Example message from frontend:
+    {
+        "poll": "uuid1"
+        "answer": "cat"
+    }
+    """
+    logger.info(event)
+    body = json.loads(event["body"])
+    body["date"] = datetime.now().isoformat()
+    msg = json.dumps(body)
+
+    try:
+        response = sqs.send_message(
+            QueueUrl=os.environ.get("VOTING_QUEUE_URL"),
+            MessageBody=msg,
+        )
+        logging.info("MessageId: " + response["MessageId"])
+    except ClientError as e:
+        print(f'{e.response["Error"]["Code"]}: {e.response["Error"]["Message"]}')
+    else:
+        print(response)
+
+    msg = {
+        "status": "success",
+        "message": f"vote is created",
+    }
+
+    return {
+        "statusCode": 200,
+        "headers": {"content-type": "application/json"},
+        "body": json.dumps(msg),
+    }
