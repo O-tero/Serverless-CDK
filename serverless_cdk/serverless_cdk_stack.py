@@ -167,3 +167,33 @@ class VotingServerlessCdkStack(core.Stack):
             [python_deps_layer],
             [poll_table],
         )
+
+        """
+        Create SQS Queues
+        """
+        voting_queue = Queue(self, "voting-queue")
+
+        # SQS Consumer worker
+        voting_to_ddb_function = Function(
+            self,
+            "VotingToDDBLambda",
+            handler="sqs_worker.insert_to_vote_db_table",
+            runtime=PYTHON_RUNTIME,
+            code=Code.asset("./backend"),
+            layers=[python_deps_layer],
+        )
+
+        voting_to_ddb_function.add_environment("POLL_TABLE", poll_table.table_name)
+
+        # SQS Queue to Lambda trigger mapping
+        voting_to_ddb_event_source = SqsEventSource(voting_queue)
+        voting_to_ddb_function.add_event_source(voting_to_ddb_event_source)
+
+        poll_table.grant_read_write_data(voting_to_ddb_function)
+        voting_queue.grant_send_messages(post_vote_function)
+
+        post_vote_function.add_environment("VOTING_QUEUE_URL", voting_queue.queue_url)
+
+        core.CfnOutput(self, "api-domain", value=api.url)
+
+        # Manually setup the DNS to point to api.voting.com with the CNAME of above
