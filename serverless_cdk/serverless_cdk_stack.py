@@ -130,7 +130,7 @@ class VotingServerlessCdkStack(core.Stack):
             [python_deps_layer],
             [poll_table],
         )
-        
+
         poll_table.grant_read_data(get_all_votes_function)
 
         get_vote_function = api_lambda_function(
@@ -197,3 +197,21 @@ class VotingServerlessCdkStack(core.Stack):
         core.CfnOutput(self, "api-domain", value=api.url)
 
         # Manually setup the DNS to point to api.voting.com with the CNAME of above
+
+
+class VotingFrontendCdkStack(core.Stack):
+    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+        super().__init__(scope, id, **kwargs)
+
+        # The error page should be index.html as well
+        # so that it can trigger NuxtJS routing
+        # when the using is opening using direct permalink
+        # Reference: https://stackoverflow.com/a/47554827
+
+        frontend_bucket = Bucket(
+            self,
+            "frontend",
+            website_index_document="index.html",
+            website_error_document="index.html",
+            public_read_access=True,
+        )
