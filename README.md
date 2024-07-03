@@ -46,7 +46,7 @@ Reserved for benchmark
 
 - Domain setup in Namecheap
 - SSL cert request from AWS Cert Manager (ACM). It require manual CNAME setup for domain verification from ACM.
-- AWS API Gateway HTTP API request authorizer. AWS CDK seems to be lacking on this as of now (Aug 2020). There's no method to properly set this up in apigatewayv2 class.
+- AWS API Gateway HTTP API request authorizer.
 - X-Ray setup
 
 ## Things can be improved
