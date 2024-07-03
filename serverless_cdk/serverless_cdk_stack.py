@@ -241,3 +241,20 @@ class VotingFrontendCdkStack(core.Stack):
                 )
             ],
         )
+
+        BucketDeployment(
+            self,
+            "DeployWithInvalidation",
+            sources=[Source.asset("./frontend/dist")],
+            destination_bucket=frontend_bucket,
+            distribution=frontend_distribution,
+            distribution_paths=["/*"],
+        )
+
+        core.CfnOutput(
+            self, "cdn-domain", value=frontend_distribution.distribution_domain_name
+        )
+
+        # Manually setup the DNS to point to www.voting.com with the CNAME of above
+
+        # manually setup SSL Cert (using ACM)
