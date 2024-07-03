@@ -28,3 +28,31 @@ def aggregate_vote_table(event, context):
         if record["eventName"] != "INSERT":
             # If it's other operation other than INSERT, ignore it
             continue
+
+        try:
+            # Check if the poll is already in the application cache
+            # If it's not in cache, fetch from DynamoDB
+            polls[d["poll_id"]]
+
+        except KeyError:
+            polls[d["poll_id"]] = db.get_poll(d["poll_id"])
+
+        # Increase the result count
+        polls[d["id"]].result[d["answer"]] += 1
+
+    for poll in polls.values():
+        update_vote_result(poll)
+
+    logger.info("Successfully processed {} records.".format(len(event["Records"])))
+
+
+def update_vote_result(poll):
+    logger.info(type(poll))
+    try:
+        logger.info(f"Persisting vote result for {poll}")
+        db.update_poll(poll)
+    except ClientError as e:
+        logger.info(f'{e.response["Error"]["Code"]}: {e.response["Error"]["Message"]}')
+        raise
+    else:
+        logger.info("Aggregate votes updated")
