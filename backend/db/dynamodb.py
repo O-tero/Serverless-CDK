@@ -51,3 +51,31 @@ class DynamoDBAdapter(AbstractDatabase):
             polls.append(poll)
 
         return polls
+
+    def update_poll(self, poll: Poll) -> None:
+        """
+        Update all answer result to the poll item
+        """
+        for (answer, count) in poll.result.items():
+            # Iterate each of the answer to update them
+            self.poll_table.update_item(
+                Key={"id": poll.id, "SK": "poll_info"},
+                UpdateExpression="SET #result.#answer = :count",
+                ExpressionAttributeNames={"#result": "result", "#answer": answer},
+                ExpressionAttributeValues={":count": count},
+            )
+
+    def insert_vote(self, vote: Vote) -> None:
+        sk = f"{vote.id}#{vote.date.isoformat()}"
+        self.poll_table.put_item(
+            Item={
+                "id": vote.poll,
+                "SK": sk,
+                "date": vote.date.isoformat(),
+                "SK1": sk,
+                "poll_id": vote.poll,
+                "pk1": vote.user,
+                "answer": vote.answer,
+            }
+        )
+        return
