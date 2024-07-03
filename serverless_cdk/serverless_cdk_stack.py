@@ -215,3 +215,29 @@ class VotingFrontendCdkStack(core.Stack):
             website_error_document="index.html",
             public_read_access=True,
         )
+
+        # CloudFront Origin should be S3 DNS name, not the S3 bucket itself
+        # Otherwise, the CloudFront cannot serve dynamic pages (eg. /vote/{id} page)
+        # https://stackoverflow.com/a/59359038/7999204
+
+        frontend_distribution = CloudFrontWebDistribution(
+            self,
+            "frontend-cdn",
+            error_configurations=[
+                CfnDistribution.CustomErrorResponseProperty(
+                    error_caching_min_ttl=0,
+                    error_code=403,
+                    response_code=200,
+                    response_page_path="/index.html",
+                )
+            ],
+            origin_configs=[
+                SourceConfiguration(
+                    custom_origin_source=CustomOriginConfig(
+                        domain_name=frontend_bucket.bucket_domain_name,
+                        origin_protocol_policy=OriginProtocolPolicy.HTTP_ONLY,
+                    ),
+                    behaviors=[Behavior(is_default_behavior=True)],
+                )
+            ],
+        )
