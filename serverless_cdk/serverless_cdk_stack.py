@@ -130,3 +130,40 @@ class VotingServerlessCdkStack(core.Stack):
             [python_deps_layer],
             [poll_table],
         )
+        
+        poll_table.grant_read_data(get_all_votes_function)
+
+        get_vote_function = api_lambda_function(
+            self,
+            "GetVoteLambda",
+            "api.get_vote_by_id",
+            api,
+            "/vote/{vote_id}",
+            GET,
+            [python_deps_layer],
+            [poll_table],
+        )
+        poll_table.grant_read_data(get_vote_function)
+
+        create_poll_function = api_lambda_function(
+            self,
+            "CreatePollLambda",
+            "api.create_poll",
+            api,
+            "/vote",
+            POST,
+            [python_deps_layer],
+            [poll_table],
+        )
+        poll_table.grant_write_data(create_poll_function)
+
+        post_vote_function = api_lambda_function(
+            self,
+            "PostVoteLambda",
+            "api.vote",
+            api,
+            "/vote/{vote_id}",
+            POST,
+            [python_deps_layer],
+            [poll_table],
+        )
