@@ -51,3 +51,41 @@ def get_vote_by_id(event, context):
         "headers": {"content-type": "application/json"},
         "body": poll.to_json(),
     }
+
+
+def create_poll(event, context):
+    """
+    Create a new voting poll
+
+    Example message from frontend:
+    {
+        "question": "what is that?"
+        "choice1": "cat"
+        "choice2": "dog"
+    }
+    """
+    logger.info("Creating a new poll")
+    logger.info(event)
+    body = json.loads(event["body"])
+    authorizer = event["requestContext"]["authorizer"]["jwt"]
+
+    poll = Poll(
+        f"poll_{uuid.uuid4()}",
+        datetime.now(),
+        body["question"],
+        Counter({body["choice1"]: 0, body["choice2"]: 0}),
+        authorizer["claims"]["username"],
+    )
+    db.insert_poll(poll)
+
+    msg = {
+        "status": "success",
+        "message": f"poll {poll.id} is created",
+        "poll_id": poll.id,
+    }
+
+    return {
+        "statusCode": 200,
+        "headers": {"content-type": "application/json"},
+        "body": json.dumps(msg),
+    }
