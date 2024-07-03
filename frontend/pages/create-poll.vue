@@ -6,7 +6,7 @@
       <b-field horizontal label="Question">
         <b-input
           v-model="question"
-          placeholder="What if cat ruled the world"
+          placeholder="What if dogs ruled the world"
           name="question"
           expanded
         ></b-input>
@@ -17,7 +17,7 @@
       </b-field>
 
       <b-field horizontal label="Choice 2">
-        <b-input v-model="choice2" placeholder="Loud purr" name="question" expanded></b-input>
+        <b-input v-model="choice2" placeholder="Loud bark" name="question" expanded></b-input>
       </b-field>
 
       <b-button type="is-dark" @click="CreatePoll()">Submit</b-button>
